@@ -1,0 +1,42 @@
+name: Lint
+
+on:
+    push:
+        branches: ["develop"]
+    pull_request:
+        branches: ["develop"]
+
+permissions:
+    contents: read
+
+jobs:
+    lint:
+        name: Lint
+        runs-on: ubuntu-20.04
+
+        env:
+            DB_HOST: localhost
+
+        steps:
+          - uses: actions/checkout@v3
+          - name: Set up Elixir
+            uses: erlef/setup-beam@988e02bfe678367a02564f65ca2e37726dc0268f
+            with:
+                elixir-version: "1.15.5"
+                otp-version: "26.0.2"
+
+          - name: Restore dependencies cache
+            uses: actions/cache@v3
+            with:
+                path: deps
+                key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+                restore-keys: ${{ runner.os }}-mix-
+
+          - name: Install dependencies
+            run: mix deps.get
+
+          - name: Run formatter
+            run: mix format --check-formatted
+
+          - name: Run credo
+            run: mix credo
